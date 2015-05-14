@@ -3,14 +3,11 @@ package me.nylad.sunshine.app;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.ShareActionProvider;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
 public class DetailActivity extends ActionBarActivity {
-
-    public ShareActionProvider mShareActionProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,17 +20,7 @@ public class DetailActivity extends ActionBarActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_detail, menu);
-        // Locate MenuItem with ShareActionProvider
-//        MenuItem item = menu.findItem(R.id.menu_item_share);
-//
-//        // Fetch and store ShareActionProvider
-//        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
-//
-//        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-//        shareIntent.setType("text/plain");
-//        TextView txt = (TextView) findViewById(R.id.weather_detail);
-//        shareIntent.putExtra(Intent.EXTRA_TEXT, txt.getText() + "#SunshineApp");
-//        mShareActionProvider.setShareIntent(shareIntent);
+
         return true;
     }
 
