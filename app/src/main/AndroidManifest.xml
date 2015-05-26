@@ -36,6 +36,11 @@
             android:label="@string/title_activity_settings"
             android:parentActivityName=".MainActivity" >
         </activity>
+        <provider
+            android:authorities="me.nylad.sunshine.app"
+            android:name=".data.WeatherProvider"
+            >
+        </provider>
     </application>
 
 </manifest>
