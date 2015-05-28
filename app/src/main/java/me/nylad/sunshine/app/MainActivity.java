@@ -8,11 +8,22 @@ import android.view.MenuItem;
 
 
 public class MainActivity extends ActionBarActivity {
-
+    public String mLocation;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView( R.layout.activity_main );
+        mLocation = Utility.getPreferredLocation( this );
+    }
+
+    public void onResume() {
+        String newLoc = Utility.getPreferredLocation( this );
+        if(newLoc != mLocation)
+        {
+            ForecastFragment ff = (ForecastFragment)getSupportFragmentManager().findFragmentByTag(ForecastFragment.FORECASTFRAGMENT_TAG);
+            ff.onLocationChanged();
+            mLocation = newLoc;
+        }
     }
 
     @Override

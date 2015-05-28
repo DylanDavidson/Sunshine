@@ -1,8 +1,13 @@
 package me.nylad.sunshine.app;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
@@ -13,15 +18,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import me.nylad.sunshine.app.data.WeatherContract;
 
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class DetailActivityFragment extends Fragment {
+public class DetailActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String SHARE_HASHTAG = " #SunshineApp";
+    public static final int DETAIL_LOADER = 1;
     public String mForecastStr;
+    public TextView txtView;
+    public String dataVal;
 
     public DetailActivityFragment() {
         setHasOptionsMenu(true);
@@ -31,10 +40,12 @@ public class DetailActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_detail, container, false);
-        TextView txt = (TextView) view.findViewById(R.id.weather_detail);
+        txtView = (TextView) view.findViewById(R.id.weather_detail);
         Intent intent = getActivity().getIntent();
-        mForecastStr = intent.getStringExtra("Weather");
-        txt.setText(mForecastStr);
+        if(intent != null)
+        {
+            mForecastStr = intent.getDataString();
+        }
         return view;
     }
 
@@ -64,7 +75,64 @@ public class DetailActivityFragment extends Fragment {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, mForecastStr + SHARE_HASHTAG);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, dataVal + SHARE_HASHTAG);
         return shareIntent;
+    }
+
+    private String formatHighLows(double high, double low) {
+        boolean isMetric = Utility.isMetric(getActivity());
+        String highLowStr = Utility.formatTemperature(high, isMetric) + "/" + Utility.formatTemperature(low, isMetric);
+        return highLowStr;
+    }
+
+    /*
+        This is ported from FetchWeatherTask --- but now we go straight from the cursor to the
+        string.
+     */
+    private String convertCursorRowToUXFormat(Cursor cursor) {
+        String highAndLow = formatHighLows(
+                cursor.getDouble(ForecastAdapter.COL_WEATHER_MAX_TEMP),
+                cursor.getDouble(ForecastAdapter.COL_WEATHER_MIN_TEMP)
+        );
+
+        return Utility.formatDate(cursor.getLong(ForecastAdapter.COL_WEATHER_DATE)) +
+                " - " + cursor.getString(ForecastAdapter.COL_WEATHER_DESC) +
+                " - " + highAndLow;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+        super.onActivityCreated( savedInstanceState );
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader( int id, Bundle args )
+    {
+        Uri uri = Uri.parse( mForecastStr );
+        return new CursorLoader(getActivity(),
+                uri,
+                ForecastFragment.FORECAST_COLUMNS,
+                WeatherContract.WeatherEntry.COLUMN_DATE + " = ? AND" +
+                        WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
+                new String[] {
+                        ((Long) WeatherContract.WeatherEntry.getDateFromUri( uri )).toString(),
+                        WeatherContract.WeatherEntry.getLocationSettingFromUri( uri )
+                },
+                null);
+    }
+
+    @Override
+    public void onLoadFinished( Loader<Cursor> loader, Cursor data )
+    {
+        data.moveToFirst();
+        dataVal = convertCursorRowToUXFormat( data );
+        txtView.setText( dataVal );
+    }
+
+    @Override
+    public void onLoaderReset( Loader<Cursor> loader )
+    {
+        txtView.setText( "" );
     }
 }
